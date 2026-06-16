@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BigQuery Release Notes Tracker</title>
+    
+    <!-- Google Fonts: Outfit (headings) and Inter (body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="dark-theme">
+    <div class="app-container">
+        
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo-area">
+                <div class="bq-logo">
+                    <i class="fa-solid fa-database database-glow"></i>
+                    <i class="fa-solid fa-magnifying-glass search-glow"></i>
+                </div>
+                <div class="header-titles">
+                    <h1>BigQuery</h1>
+                    <p class="subtitle">Release Notes Tracker</p>
+                </div>
+            </div>
+            
+            <div class="header-actions">
+                <button id="refresh-btn" class="btn btn-primary" title="Refresh Release Notes">
+                    <i class="fa-solid fa-arrows-rotate spinner"></i>
+                    <span>Refresh</span>
+                </button>
+            </div>
+        </header>
+        
+        <!-- Dashboard Toolbar -->
+        <section class="toolbar">
+            <div class="search-wrapper">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="search-input" placeholder="Search release notes, features, fixes..." autocomplete="off">
+                <button id="clear-search" class="clear-btn" style="display: none;">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <div class="filter-wrapper">
+                <div class="filter-label">Filter by type:</div>
+                <div class="filter-pills" id="filter-pills">
+                    <button class="pill active" data-filter="all">All</button>
+                    <button class="pill" data-filter="Feature">Features</button>
+                    <button class="pill" data-filter="Change">Changes</button>
+                    <button class="pill" data-filter="Deprecation">Deprecations</button>
+                    <button class="pill" data-filter="Issue">Issues</button>
+                    <button class="pill" data-filter="General">General</button>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Main Content Grid -->
+        <main class="content-area">
+            
+            <!-- Loading State -->
+            <div id="loading-state" class="loading-state">
+                <div class="large-spinner"></div>
+                <p>Loading BigQuery release notes...</p>
+            </div>
+            
+            <!-- Error State -->
+            <div id="error-state" class="error-state" style="display: none;">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <h3>Oops! Something went wrong</h3>
+                <p id="error-message">Failed to load release notes. Please try again.</p>
+                <button id="retry-btn" class="btn btn-secondary">
+                    <i class="fa-solid fa-arrows-rotate"></i> Retry
+                </button>
+            </div>
+            
+            <!-- Notes Grid -->
+            <div id="notes-grid" class="notes-grid" style="display: none;">
+                <!-- Dynamically populated cards will go here -->
+            </div>
+            
+            <!-- Empty Search State -->
+            <div id="empty-state" class="empty-state" style="display: none;">
+                <i class="fa-solid fa-folder-open"></i>
+                <h3>No results match your search</h3>
+                <p>Try using different keywords or clearing your active filters.</p>
+                <button id="reset-filters-btn" class="btn btn-secondary">Reset Filters</button>
+            </div>
+            
+        </main>
+        
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>Data fetched from official <a href="https://docs.cloud.google.com/feeds/bigquery-release-notes.xml" target="_blank" rel="noopener">BigQuery Release Notes Feed</a>.</p>
+            <p class="copyright">&copy; 2026 BigQuery Release Notes Tracker</p>
+        </footer>
+        
+        <!-- Tweet Composer Drawer -->
+        <div id="tweet-drawer-overlay" class="drawer-overlay"></div>
+        <div id="tweet-drawer" class="tweet-drawer">
+            <div class="drawer-header">
+                <h3><i class="fa-brands fa-x-twitter"></i> Tweet about this update</h3>
+                <button id="close-drawer-btn" class="close-drawer-btn" title="Close">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <div class="drawer-content">
+                <!-- Selected Note Reference -->
+                <div class="note-reference">
+                    <div class="reference-meta">
+                        <span id="ref-category" class="category-badge">Feature</span>
+                        <span id="ref-date" class="ref-date">June 15, 2026</span>
+                    </div>
+                    <p id="ref-text" class="ref-text">Selected release note snippet will be shown here...</p>
+                </div>
+                
+                <!-- Tweet Customizer -->
+                <div class="tweet-composer-card">
+                    <label for="tweet-textarea" class="composer-label">Draft your Tweet:</label>
+                    <textarea id="tweet-textarea" placeholder="What's happening?"></textarea>
+                    
+                    <div class="composer-footer">
+                        <div class="char-counter" id="char-counter">
+                            <span id="current-char-count">0</span> / <span class="max-chars">280</span>
+                        </div>
+                        <div class="char-progress-ring">
+                            <svg width="24" height="24">
+                                <circle class="bg" cx="12" cy="12" r="9" />
+                                <circle class="progress" id="progress-indicator" cx="12" cy="12" r="9" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="drawer-actions">
+                    <button id="copy-tweet-btn" class="btn btn-secondary btn-full">
+                        <i class="fa-solid fa-copy"></i>
+                        <span>Copy Text</span>
+                    </button>
+                    <button id="share-tweet-btn" class="btn btn-twitter btn-full">
+                        <i class="fa-brands fa-x-twitter"></i>
+                        <span>Post on X</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Toast Notification -->
+        <div id="toast" class="toast">
+            <i class="fa-solid fa-check-circle toast-icon"></i>
+            <span id="toast-message">Copied to clipboard!</span>
+        </div>
+        
+    </div>
+    
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
