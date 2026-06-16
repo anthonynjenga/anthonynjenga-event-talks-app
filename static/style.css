@@ -1150,6 +1150,23 @@ body.light-theme .note-row:hover {
     margin-top: auto;
 }
 
+.kbd-shortcut {
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.15rem 0.4rem;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 4px;
+    margin-left: auto;
+    color: var(--text-secondary);
+}
+
+body.light-theme .kbd-shortcut {
+    background: rgba(15, 23, 42, 0.06);
+    border: 1px solid rgba(15, 23, 42, 0.1);
+}
+
 /* ==========================================================================
    Toast Notification
    ========================================================================== */

@@ -52,7 +52,7 @@
         <section class="toolbar">
             <div class="search-wrapper">
                 <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                <input type="text" id="search-input" placeholder="Search release notes, features, fixes..." autocomplete="off">
+                <input type="text" id="search-input" placeholder="Search release notes, features, fixes... (Press '/')" autocomplete="off">
                 <button id="clear-search" class="clear-btn" style="display: none;">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
@@ -198,10 +198,12 @@
                     <button id="copy-tweet-btn" class="btn btn-secondary btn-full">
                         <i class="fa-solid fa-copy"></i>
                         <span>Copy Text</span>
+                        <kbd class="kbd-shortcut">Ctrl+Shift+C</kbd>
                     </button>
                     <button id="share-tweet-btn" class="btn btn-twitter btn-full">
                         <i class="fa-brands fa-x-twitter"></i>
                         <span>Post on X</span>
+                        <kbd class="kbd-shortcut">Ctrl+Enter</kbd>
                     </button>
                 </div>
             </div>

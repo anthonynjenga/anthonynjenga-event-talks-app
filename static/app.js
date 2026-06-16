@@ -6,6 +6,7 @@ let activeFilter = 'all';
 let searchQuery = '';
 let selectedNote = null;
 let activeView = localStorage.getItem('viewMode') || 'grid';
+let lastFocusedElement = null;
 
 // Constant for Twitter URL character count representation
 const TWITTER_URL_LENGTH = 23;
@@ -171,9 +172,66 @@ function setupEventListeners() {
     closeDrawerBtn.addEventListener('click', closeDrawer);
     drawerOverlay.addEventListener('click', closeDrawer);
     
-    // Escape key closes drawer
+    // Keyboard Event Handling (Global + Drawer specific)
     window.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeDrawer();
+        // 1. Escape key closes drawer
+        if (e.key === 'Escape' && tweetDrawer.classList.contains('active')) {
+            closeDrawer();
+            return;
+        }
+
+        // 2. Global search focus shortcut: '/' when not focused on an input/textarea
+        if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            searchInput.focus();
+            return;
+        }
+
+        // Drawer-specific keyboard shortcuts (only active when drawer is open)
+        if (tweetDrawer.classList.contains('active')) {
+            // 3. Ctrl+Enter to post/share tweet
+            if (e.key === 'Enter' && e.ctrlKey) {
+                e.preventDefault();
+                if (!shareTweetBtn.disabled) {
+                    postToTwitter();
+                }
+                return;
+            }
+
+            // 4. Ctrl+Shift+C to copy tweet text
+            if ((e.key === 'C' || e.key === 'c') && e.ctrlKey && e.shiftKey) {
+                e.preventDefault();
+                copyTweetToClipboard();
+                return;
+            }
+
+            // 5. Keyboard Focus Trap inside drawer
+            if (e.key === 'Tab') {
+                // Find all focusable elements in the drawer
+                const focusableElements = Array.from(tweetDrawer.querySelectorAll(
+                    'button:not([disabled]), textarea:not([disabled]), [tabindex="0"]'
+                ));
+                
+                if (focusableElements.length === 0) return;
+
+                const firstEl = focusableElements[0];
+                const lastEl = focusableElements[focusableElements.length - 1];
+
+                if (e.shiftKey) {
+                    // Shift + Tab: if on the first element, wrap to the last
+                    if (document.activeElement === firstEl) {
+                        e.preventDefault();
+                        lastEl.focus();
+                    }
+                } else {
+                    // Tab: if on the last element, wrap to the first
+                    if (document.activeElement === lastEl) {
+                        e.preventDefault();
+                        firstEl.focus();
+                    }
+                }
+            }
+        }
     });
     
     // Textarea input
@@ -300,6 +358,9 @@ function renderNotes() {
             const row = document.createElement('div');
             row.className = 'note-row';
             row.setAttribute('data-id', note.id);
+            row.setAttribute('tabindex', '0');
+            row.setAttribute('role', 'button');
+            row.setAttribute('aria-expanded', 'false');
             const catClass = `badge-${note.category.toLowerCase()}`;
             
             // Extract a clean short snippet for the title
@@ -341,6 +402,19 @@ function renderNotes() {
                     return; // Don't toggle on button or link clicks
                 }
                 row.classList.toggle('expanded');
+                const isExpanded = row.classList.contains('expanded');
+                row.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+            });
+            
+            // Keydown listener for Space/Enter trigger
+            row.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    if (e.target.closest('.btn-card-copy') || e.target.closest('.btn-card-tweet') || e.target.closest('a')) {
+                        return; // Don't trigger expand on nested interactive elements
+                    }
+                    e.preventDefault();
+                    row.click();
+                }
             });
             
             row.querySelector('.btn-card-tweet').addEventListener('click', () => {
@@ -376,6 +450,7 @@ let activeTweetStyle = 'professional';
 
 function openTweetDrawer(note) {
     selectedNote = note;
+    lastFocusedElement = document.activeElement;
     
     // Set metadata reference in the drawer
     refCategory.textContent = note.category;
@@ -396,6 +471,13 @@ function openTweetDrawer(note) {
     tweetDrawer.classList.add('active');
     drawerOverlay.classList.add('active');
     document.body.style.overflow = 'hidden'; // Lock background scrolling
+    
+    // Autofocus textarea after slide-in transition starts
+    setTimeout(() => {
+        tweetTextarea.focus();
+        const len = tweetTextarea.value.length;
+        tweetTextarea.setSelectionRange(len, len);
+    }, 150);
 }
 
 function closeDrawer() {
@@ -403,6 +485,12 @@ function closeDrawer() {
     drawerOverlay.classList.remove('active');
     document.body.style.overflow = ''; // Restore background scrolling
     selectedNote = null;
+    
+    // Restore focus to triggering element
+    if (lastFocusedElement) {
+        lastFocusedElement.focus();
+        lastFocusedElement = null;
+    }
 }
 
 // ==========================================================================
