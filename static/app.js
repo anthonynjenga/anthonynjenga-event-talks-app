@@ -14,6 +14,7 @@ const TWITTER_URL_LENGTH = 23;
 // ==========================================================================
 const refreshBtn = document.getElementById('refresh-btn');
 const exportCsvBtn = document.getElementById('export-csv-btn');
+const themeToggleBtn = document.getElementById('theme-toggle-btn');
 const refreshIcon = refreshBtn.querySelector('.spinner');
 const searchInput = document.getElementById('search-input');
 const clearSearchBtn = document.getElementById('clear-search');
@@ -48,6 +49,7 @@ const toastMessage = document.getElementById('toast-message');
 // Initialize App
 // ==========================================================================
 document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
     fetchReleaseNotes(false);
     setupEventListeners();
     initProgressRing();
@@ -87,6 +89,9 @@ async function fetchReleaseNotes(forceRefresh = false) {
 // Event Listeners Setup
 // ==========================================================================
 function setupEventListeners() {
+    // Theme toggle click
+    themeToggleBtn.addEventListener('click', toggleTheme);
+
     // Refresh button click
     refreshBtn.addEventListener('click', () => fetchReleaseNotes(true));
     
@@ -468,4 +473,32 @@ function exportToCSV() {
     document.body.removeChild(link);
     
     showToast(`Exported ${filteredNotes.length} notes to CSV!`);
+}
+
+// Initialize Theme (handles dark-theme as default, loads local storage preference)
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    
+    if (savedTheme === 'light') {
+        document.body.classList.remove('dark-theme');
+        document.body.classList.add('light-theme');
+    } else {
+        document.body.classList.remove('light-theme');
+        document.body.classList.add('dark-theme');
+    }
+}
+
+// Toggle Theme (swaps between dark-theme and light-theme)
+function toggleTheme() {
+    if (document.body.classList.contains('light-theme')) {
+        document.body.classList.remove('light-theme');
+        document.body.classList.add('dark-theme');
+        localStorage.setItem('theme', 'dark');
+        showToast('Switched to Dark Mode');
+    } else {
+        document.body.classList.remove('dark-theme');
+        document.body.classList.add('light-theme');
+        localStorage.setItem('theme', 'light');
+        showToast('Switched to Light Mode');
+    }
 }
