@@ -2,11 +2,13 @@ from flask import Flask, render_template, jsonify, request
 import feedparser
 import requests
 import re
+import datetime
 
 app = Flask(__name__)
 
 # Global cache for release notes
 cached_notes = None
+last_updated = None
 
 def fetch_and_parse_notes():
     feed_url = 'https://docs.cloud.google.com/feeds/bigquery-release-notes.xml'
@@ -75,7 +77,7 @@ def index():
 
 @app.route('/api/release-notes')
 def get_release_notes():
-    global cached_notes
+    global cached_notes, last_updated
     force_refresh = request.args.get('refresh', 'false').lower() == 'true'
     
     if cached_notes is None or force_refresh:
@@ -87,10 +89,12 @@ def get_release_notes():
                 'notes': []
             }), 500
         cached_notes = notes
+        last_updated = datetime.datetime.now().strftime("%I:%M %p")
         
     return jsonify({
         'status': 'success',
-        'notes': cached_notes
+        'notes': cached_notes,
+        'last_updated': last_updated
     })
 
 if __name__ == '__main__':

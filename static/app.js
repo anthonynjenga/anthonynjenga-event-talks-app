@@ -5,6 +5,7 @@ let releaseNotes = [];
 let activeFilter = 'all';
 let searchQuery = '';
 let selectedNote = null;
+let activeView = localStorage.getItem('viewMode') || 'grid';
 
 // Constant for Twitter URL character count representation
 const TWITTER_URL_LENGTH = 23;
@@ -26,6 +27,16 @@ const errorMessage = document.getElementById('error-message');
 const retryBtn = document.getElementById('retry-btn');
 const emptyState = document.getElementById('empty-state');
 const resetFiltersBtn = document.getElementById('reset-filters-btn');
+
+// View Toggle & Stats DOM Elements
+const viewGridBtn = document.getElementById('view-grid-btn');
+const viewListBtn = document.getElementById('view-list-btn');
+const statsBar = document.getElementById('stats-bar');
+const statusIndicatorDot = document.getElementById('status-indicator-dot');
+const syncStatusText = document.getElementById('sync-status');
+const visibleCountEl = document.getElementById('visible-count');
+const totalCountEl = document.getElementById('total-count');
+const categoryStatsContainer = document.getElementById('category-stats');
 
 // Drawer Elements
 const tweetDrawer = document.getElementById('tweet-drawer');
@@ -52,6 +63,7 @@ const toastMessage = document.getElementById('toast-message');
 // ==========================================================================
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
+    initViewMode();
     fetchReleaseNotes(false);
     setupEventListeners();
     initProgressRing();
@@ -62,6 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // ==========================================================================
 async function fetchReleaseNotes(forceRefresh = false) {
     showState('loading');
+    if (statsBar) statsBar.style.display = 'none';
     
     // Animate spinner during fetch
     refreshIcon.classList.remove('paused');
@@ -74,6 +87,15 @@ async function fetchReleaseNotes(forceRefresh = false) {
         
         if (data.status === 'success') {
             releaseNotes = data.notes;
+            
+            // Update sync / query status
+            if (syncStatusText) {
+                syncStatusText.textContent = `Last Synced: ${data.last_updated || 'Just now'}`;
+            }
+            if (statsBar) {
+                statsBar.style.display = 'flex';
+            }
+            
             renderNotes();
         } else {
             showError(data.message || 'Failed to fetch release notes.');
@@ -177,6 +199,10 @@ function setupEventListeners() {
     
     // Auto-shorten click
     autoShortenBtn.addEventListener('click', autoShortenTweet);
+
+    // View toggle clicks
+    viewGridBtn.addEventListener('click', () => setViewMode('grid'));
+    viewListBtn.addEventListener('click', () => setViewMode('list'));
 }
 
 // ==========================================================================
@@ -187,7 +213,6 @@ function renderNotes() {
     const filteredNotes = releaseNotes.filter(note => {
         const matchesCategory = activeFilter === 'all' || note.category === activeFilter;
         const matchesSearch = !searchQuery || 
-                              note.title.toLowerCase().includes(searchQuery) ||
                               note.category.toLowerCase().includes(searchQuery) ||
                               note.text.toLowerCase().includes(searchQuery) ||
                               note.date.toLowerCase().includes(searchQuery);
@@ -195,7 +220,30 @@ function renderNotes() {
         return matchesCategory && matchesSearch;
     });
     
-    // Clear grid
+    // Update Counts & Stats
+    if (visibleCountEl && totalCountEl) {
+        visibleCountEl.textContent = filteredNotes.length;
+        totalCountEl.textContent = releaseNotes.length;
+    }
+    
+    // Update Category Stats Breakdown
+    if (categoryStatsContainer) {
+        categoryStatsContainer.innerHTML = '';
+        const counts = {};
+        filteredNotes.forEach(note => {
+            counts[note.category] = (counts[note.category] || 0) + 1;
+        });
+        
+        Object.keys(counts).sort().forEach(cat => {
+            const count = counts[cat];
+            const badge = document.createElement('span');
+            badge.className = `stat-pill badge-${cat.toLowerCase()}`;
+            badge.innerHTML = `${cat}: <span>${count}</span>`;
+            categoryStatsContainer.appendChild(badge);
+        });
+    }
+    
+    // Clear container
     notesGrid.innerHTML = '';
     
     if (filteredNotes.length === 0) {
@@ -203,50 +251,109 @@ function renderNotes() {
         return;
     }
     
-    showState('grid');
-    
-    // Create elements
-    filteredNotes.forEach(note => {
-        const card = document.createElement('div');
-        card.className = 'note-card';
+    if (activeView === 'grid') {
+        notesGrid.className = 'notes-grid';
+        showState('grid');
         
-        // Match category for badge CSS
-        const catClass = `badge-${note.category.toLowerCase()}`;
-        
-        card.innerHTML = `
-            <div>
-                <div class="card-header-meta">
-                    <span class="date-badge">
-                        <i class="fa-regular fa-calendar"></i> ${note.date}
-                    </span>
-                    <span class="category-badge ${catClass}">${note.category}</span>
+        filteredNotes.forEach(note => {
+            const card = document.createElement('div');
+            card.className = 'note-card';
+            const catClass = `badge-${note.category.toLowerCase()}`;
+            
+            card.innerHTML = `
+                <div>
+                    <div class="card-header-meta">
+                        <span class="date-badge">
+                            <i class="fa-regular fa-calendar"></i> ${note.date}
+                        </span>
+                        <span class="category-badge ${catClass}">${note.category}</span>
+                    </div>
+                    <div class="card-body">
+                        ${note.html}
+                    </div>
                 </div>
-                <div class="card-body">
-                    ${note.html}
+                <div class="card-actions">
+                    <button class="btn-card-copy" title="Copy Plain Text">
+                        <i class="fa-regular fa-copy"></i> Copy
+                    </button>
+                    <button class="btn-card-tweet" data-id="${note.id}">
+                        <i class="fa-brands fa-x-twitter"></i> Tweet
+                    </button>
                 </div>
-            </div>
-            <div class="card-actions">
-                <button class="btn-card-copy" title="Copy Plain Text">
-                    <i class="fa-regular fa-copy"></i> Copy
-                </button>
-                <button class="btn-card-tweet" data-id="${note.id}">
-                    <i class="fa-brands fa-x-twitter"></i> Tweet
-                </button>
-            </div>
-        `;
-        
-        // Attach listener for the specific tweet button
-        card.querySelector('.btn-card-tweet').addEventListener('click', () => {
-            openTweetDrawer(note);
+            `;
+            
+            card.querySelector('.btn-card-tweet').addEventListener('click', () => {
+                openTweetDrawer(note);
+            });
+            
+            card.querySelector('.btn-card-copy').addEventListener('click', () => {
+                copyNoteToClipboard(note);
+            });
+            
+            notesGrid.appendChild(card);
         });
+    } else {
+        notesGrid.className = 'notes-list';
+        showState('list');
         
-        // Attach listener for copy button
-        card.querySelector('.btn-card-copy').addEventListener('click', () => {
-            copyNoteToClipboard(note);
+        filteredNotes.forEach(note => {
+            const row = document.createElement('div');
+            row.className = 'note-row';
+            row.setAttribute('data-id', note.id);
+            const catClass = `badge-${note.category.toLowerCase()}`;
+            
+            // Extract a clean short snippet for the title
+            const maxSnippetLen = 75;
+            let titleSnippet = note.text;
+            if (titleSnippet.length > maxSnippetLen) {
+                titleSnippet = titleSnippet.substring(0, maxSnippetLen).trim() + '...';
+            }
+            
+            row.innerHTML = `
+                <div class="row-header">
+                    <div class="row-left">
+                        <span class="row-date">${note.date}</span>
+                        <span class="row-category category-badge ${catClass}">${note.category}</span>
+                        <span class="row-title">${titleSnippet}</span>
+                    </div>
+                    <div class="row-right">
+                        <span class="row-expand-icon"><i class="fa-solid fa-chevron-down"></i></span>
+                    </div>
+                </div>
+                <div class="row-details">
+                    <div class="row-content">
+                        ${note.html}
+                    </div>
+                    <div class="row-actions">
+                        <button class="btn-card-copy" title="Copy Plain Text">
+                            <i class="fa-regular fa-copy"></i> Copy
+                        </button>
+                        <button class="btn-card-tweet" data-id="${note.id}">
+                            <i class="fa-brands fa-x-twitter"></i> Tweet
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Expand/collapse click listener
+            row.addEventListener('click', (e) => {
+                if (e.target.closest('.btn-card-copy') || e.target.closest('.btn-card-tweet') || e.target.closest('a')) {
+                    return; // Don't toggle on button or link clicks
+                }
+                row.classList.toggle('expanded');
+            });
+            
+            row.querySelector('.btn-card-tweet').addEventListener('click', () => {
+                openTweetDrawer(note);
+            });
+            
+            row.querySelector('.btn-card-copy').addEventListener('click', () => {
+                copyNoteToClipboard(note);
+            });
+            
+            notesGrid.appendChild(row);
         });
-        
-        notesGrid.appendChild(card);
-    });
+    }
 }
 
 // State toggling utilities
@@ -254,7 +361,7 @@ function showState(state) {
     loadingState.style.display = state === 'loading' ? 'flex' : 'none';
     errorState.style.display = state === 'error' ? 'flex' : 'none';
     emptyState.style.display = state === 'empty' ? 'flex' : 'none';
-    notesGrid.style.display = state === 'grid' ? 'grid' : 'none';
+    notesGrid.style.display = (state === 'active' || state === 'grid' || state === 'list') ? '' : 'none';
 }
 
 function showError(msg) {
@@ -509,6 +616,26 @@ function toggleTheme() {
         localStorage.setItem('theme', 'light');
         showToast('Switched to Light Mode');
     }
+}
+
+// Initialize View Mode (grid or list)
+function initViewMode() {
+    if (activeView === 'list') {
+        viewGridBtn.classList.remove('active');
+        viewListBtn.classList.add('active');
+    } else {
+        viewGridBtn.classList.add('active');
+        viewListBtn.classList.remove('active');
+    }
+}
+
+// Set View Mode and re-render
+function setViewMode(view) {
+    if (activeView === view) return;
+    activeView = view;
+    localStorage.setItem('viewMode', view);
+    initViewMode();
+    renderNotes();
 }
 
 // Build the tweet text draft using a specific note, style, and maxTextLength constraint

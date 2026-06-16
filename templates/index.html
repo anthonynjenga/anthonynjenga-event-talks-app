@@ -58,16 +58,47 @@
                 </button>
             </div>
             
-            <div class="filter-wrapper">
-                <div class="filter-label">Filter by type:</div>
-                <div class="filter-pills" id="filter-pills">
-                    <button class="pill active" data-filter="all">All</button>
-                    <button class="pill" data-filter="Feature">Features</button>
-                    <button class="pill" data-filter="Change">Changes</button>
-                    <button class="pill" data-filter="Deprecation">Deprecations</button>
-                    <button class="pill" data-filter="Issue">Issues</button>
-                    <button class="pill" data-filter="General">General</button>
+            <div class="toolbar-actions">
+                <div class="filter-wrapper">
+                    <div class="filter-label">Filter by type:</div>
+                    <div class="filter-pills" id="filter-pills">
+                        <button class="pill active" data-filter="all">All</button>
+                        <button class="pill" data-filter="Feature">Features</button>
+                        <button class="pill" data-filter="Change">Changes</button>
+                        <button class="pill" data-filter="Deprecation">Deprecations</button>
+                        <button class="pill" data-filter="Issue">Issues</button>
+                        <button class="pill" data-filter="General">General</button>
+                    </div>
                 </div>
+                
+                <div class="view-toggle-wrapper">
+                    <span class="toggle-label">Layout:</span>
+                    <div class="view-toggle-group">
+                        <button id="view-grid-btn" class="view-toggle-btn active" title="Grid View (Comfortable)">
+                            <i class="fa-solid fa-grip"></i>
+                        </button>
+                        <button id="view-list-btn" class="view-toggle-btn" title="List View (Compact)">
+                            <i class="fa-solid fa-list"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Query Status & Stats Bar -->
+        <section class="stats-bar" id="stats-bar" style="display: none;">
+            <div class="stats-left">
+                <div class="status-indicator">
+                    <span id="status-indicator-dot" class="status-dot pulsing"></span>
+                    <span id="sync-status">Up to date</span>
+                </div>
+                <div class="stats-divider"></div>
+                <div class="count-summary">
+                    Showing <span id="visible-count" class="count-highlight">0</span> of <span id="total-count">0</span> updates
+                </div>
+            </div>
+            <div class="stats-right" id="category-stats">
+                <!-- Dynamically populated stats breakdown -->
             </div>
         </section>
         
