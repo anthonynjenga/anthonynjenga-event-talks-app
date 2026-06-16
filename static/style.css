@@ -530,12 +530,13 @@ a:hover {
 .card-actions {
     display: flex;
     justify-content: flex-end;
+    gap: 0.5rem;
     border-top: 1px solid var(--border-color);
     padding-top: 1rem;
     margin-top: 0.5rem;
 }
 
-.btn-card-tweet {
+.btn-card-tweet, .btn-card-copy {
     background: transparent;
     border: 1px solid var(--border-color);
     color: var(--text-secondary);
@@ -550,7 +551,7 @@ a:hover {
     transition: var(--transition-fast);
 }
 
-.btn-card-tweet:hover {
+.btn-card-tweet:hover, .btn-card-copy:hover {
     color: #fff;
     background: rgba(255, 255, 255, 0.05);
     border-color: var(--accent-blue);

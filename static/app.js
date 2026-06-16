@@ -13,6 +13,7 @@ const TWITTER_URL_LENGTH = 23;
 // DOM Elements
 // ==========================================================================
 const refreshBtn = document.getElementById('refresh-btn');
+const exportCsvBtn = document.getElementById('export-csv-btn');
 const refreshIcon = refreshBtn.querySelector('.spinner');
 const searchInput = document.getElementById('search-input');
 const clearSearchBtn = document.getElementById('clear-search');
@@ -88,6 +89,9 @@ async function fetchReleaseNotes(forceRefresh = false) {
 function setupEventListeners() {
     // Refresh button click
     refreshBtn.addEventListener('click', () => fetchReleaseNotes(true));
+    
+    // Export to CSV click
+    exportCsvBtn.addEventListener('click', exportToCSV);
     
     // Search input change
     searchInput.addEventListener('input', (e) => {
@@ -200,8 +204,11 @@ function renderNotes() {
                 </div>
             </div>
             <div class="card-actions">
+                <button class="btn-card-copy" title="Copy Plain Text">
+                    <i class="fa-regular fa-copy"></i> Copy
+                </button>
                 <button class="btn-card-tweet" data-id="${note.id}">
-                    <i class="fa-brands fa-x-twitter"></i> Tweet This
+                    <i class="fa-brands fa-x-twitter"></i> Tweet
                 </button>
             </div>
         `;
@@ -209,6 +216,11 @@ function renderNotes() {
         // Attach listener for the specific tweet button
         card.querySelector('.btn-card-tweet').addEventListener('click', () => {
             openTweetDrawer(note);
+        });
+        
+        // Attach listener for copy button
+        card.querySelector('.btn-card-copy').addEventListener('click', () => {
+            copyNoteToClipboard(note);
         });
         
         notesGrid.appendChild(card);
@@ -379,4 +391,81 @@ function showToast(msg) {
     setTimeout(() => {
         toast.classList.remove('active');
     }, 2500);
+}
+
+// Copy single release note plaintext to clipboard
+function copyNoteToClipboard(note) {
+    if (!note || !note.text) return;
+    
+    const formattedText = `[${note.date}] [${note.category}]\n${note.text}\nSource: ${note.link}`;
+    
+    navigator.clipboard.writeText(formattedText).then(() => {
+        showToast('Release note copied!');
+    }).catch(err => {
+        console.error('Could not copy note: ', err);
+        showToast('Failed to copy. Please copy manually.');
+    });
+}
+
+// Export currently active/filtered release notes to CSV
+function exportToCSV() {
+    if (releaseNotes.length === 0) {
+        showToast('No release notes available to export.');
+        return;
+    }
+    
+    const filteredNotes = releaseNotes.filter(note => {
+        const matchesCategory = activeFilter === 'all' || note.category === activeFilter;
+        const matchesSearch = !searchQuery || 
+                              note.title.toLowerCase().includes(searchQuery) ||
+                              note.category.toLowerCase().includes(searchQuery) ||
+                              note.text.toLowerCase().includes(searchQuery) ||
+                              note.date.toLowerCase().includes(searchQuery);
+                              
+        return matchesCategory && matchesSearch;
+    });
+    
+    if (filteredNotes.length === 0) {
+        showToast('No filtered release notes to export.');
+        return;
+    }
+    
+    const headers = ['Date', 'Category', 'Update Content', 'Link'];
+    
+    const escapeCSV = (val) => {
+        if (val === null || val === undefined) return '';
+        let str = String(val);
+        str = str.replace(/"/g, '""');
+        if (str.includes(',') || str.includes('\n') || str.includes('\r') || str.includes('"')) {
+            str = `"${str}"`;
+        }
+        return str;
+    };
+    
+    const rows = filteredNotes.map(note => [
+        escapeCSV(note.date),
+        escapeCSV(note.category),
+        escapeCSV(note.text),
+        escapeCSV(note.link)
+    ]);
+    
+    const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    
+    let filterSuffix = activeFilter !== 'all' ? `-${activeFilter.toLowerCase()}` : '';
+    let searchSuffix = searchQuery ? `-${searchQuery.replace(/[^a-z0-9]/gi, '_').toLowerCase()}` : '';
+    const dateStr = new Date().toISOString().slice(0, 10);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `bigquery-release-notes-${dateStr}${filterSuffix}${searchSuffix}.csv`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showToast(`Exported ${filteredNotes.length} notes to CSV!`);
 }
