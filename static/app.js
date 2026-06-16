@@ -40,6 +40,8 @@ const progressIndicator = document.getElementById('progress-indicator');
 const charCounter = document.getElementById('char-counter');
 const copyTweetBtn = document.getElementById('copy-tweet-btn');
 const shareTweetBtn = document.getElementById('share-tweet-btn');
+const styleOptions = document.getElementById('style-options');
+const autoShortenBtn = document.getElementById('auto-shorten-btn');
 
 // Toast Element
 const toast = document.getElementById('toast');
@@ -160,6 +162,21 @@ function setupEventListeners() {
     
     // X/Twitter Web Intent share
     shareTweetBtn.addEventListener('click', postToTwitter);
+
+    // Style pills click
+    styleOptions.addEventListener('click', (e) => {
+        const pill = e.target.closest('.style-pill');
+        if (!pill) return;
+        
+        styleOptions.querySelectorAll('.style-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        
+        activeTweetStyle = pill.dataset.style;
+        applyTweetTemplate();
+    });
+    
+    // Auto-shorten click
+    autoShortenBtn.addEventListener('click', autoShortenTweet);
 }
 
 // ==========================================================================
@@ -248,6 +265,8 @@ function showError(msg) {
 // ==========================================================================
 // Tweet Drawer Logic
 // ==========================================================================
+let activeTweetStyle = 'professional';
+
 function openTweetDrawer(note) {
     selectedNote = note;
     
@@ -258,26 +277,13 @@ function openTweetDrawer(note) {
     refDate.textContent = note.date;
     refText.textContent = note.text;
     
-    // Prepare the initial tweet text draft
-    // Limit and format the tweet smartly
-    const hashtags = '#BigQuery #GoogleCloud';
-    const link = note.link;
-    const datePrefix = `BigQuery Update (${note.date}) [${note.category}]: `;
+    // Reset active style to professional style
+    activeTweetStyle = 'professional';
+    styleOptions.querySelectorAll('.style-pill').forEach(p => p.classList.remove('active'));
+    styleOptions.querySelector('[data-style="professional"]').classList.add('active');
     
-    // Length calculations for default drafting
-    // Twitter URLs count as 23 characters
-    const templateFixedLen = datePrefix.length + 2 + hashtags.length + 2 + TWITTER_URL_LENGTH; // 2 spacing newlines/spaces
-    const maxTextLen = 280 - templateFixedLen - 5; // minus some safety margin and '...'
-    
-    let textDraft = note.text;
-    if (textDraft.length > maxTextLen) {
-        textDraft = textDraft.substring(0, maxTextLen) + '...';
-    }
-    
-    const initialTweet = `${datePrefix}${textDraft}\n\n${hashtags}\n${link}`;
-    
-    tweetTextarea.value = initialTweet;
-    updateCharCount();
+    // Apply template (automatically truncate on initial load if needed)
+    applyTweetTemplate(true);
     
     // Open drawer classes
     tweetDrawer.classList.add('active');
@@ -328,9 +334,11 @@ function updateCharCount() {
     if (totalCount > 280) {
         shareTweetBtn.style.opacity = 0.5;
         shareTweetBtn.style.cursor = 'not-allowed';
+        autoShortenBtn.style.display = 'inline-flex';
     } else {
         shareTweetBtn.style.opacity = 1;
         shareTweetBtn.style.cursor = 'pointer';
+        autoShortenBtn.style.display = 'none';
     }
 }
 
@@ -501,4 +509,73 @@ function toggleTheme() {
         localStorage.setItem('theme', 'light');
         showToast('Switched to Light Mode');
     }
+}
+
+// Build the tweet text draft using a specific note, style, and maxTextLength constraint
+function buildTweetText(note, style, maxTextLength = null) {
+    if (!note) return '';
+    const hashtags = '#BigQuery #GoogleCloud';
+    const link = note.link;
+    const date = note.date;
+    const category = note.category;
+    let description = note.text;
+    
+    if (maxTextLength !== null && description.length > maxTextLength) {
+        description = description.substring(0, maxTextLength) + '...';
+    }
+    
+    if (style === 'hype') {
+        return `🚨 BigQuery Alert! 🚨 [${category}] (${date})\n\n${description}\n\n${hashtags}\n${link}`;
+    } else if (style === 'minimal') {
+        return `New in #BigQuery (${category}): ${description} ${link}`;
+    } else { // default to 'professional'
+        return `BigQuery Update (${date}) [${category}]: ${description}\n\n${hashtags}\n${link}`;
+    }
+}
+
+// Get the base length of the tweet with empty text (resolves URL size correctly)
+function getTweetBaseLength(note, style) {
+    const dummyNote = { ...note, text: '' };
+    const dummyTweet = buildTweetText(dummyNote, style);
+    
+    const urlRegex = /https?:\/\/[^\s]+/g;
+    const urls = dummyTweet.match(urlRegex) || [];
+    const textWithoutUrls = dummyTweet.replace(urlRegex, '');
+    
+    return textWithoutUrls.length + (urls.length * TWITTER_URL_LENGTH);
+}
+
+// Apply the selected tweet template style to the textarea
+function applyTweetTemplate(autoTruncateInitial = false) {
+    if (!selectedNote) return;
+    
+    // Check if we need to auto-truncate on load to prevent initial overflows
+    if (autoTruncateInitial) {
+        const baseLen = getTweetBaseLength(selectedNote, activeTweetStyle);
+        const remainingChars = 280 - baseLen;
+        
+        if (selectedNote.text.length > remainingChars) {
+            const maxTextLen = Math.max(0, remainingChars - 3);
+            tweetTextarea.value = buildTweetText(selectedNote, activeTweetStyle, maxTextLen);
+            updateCharCount();
+            return;
+        }
+    }
+    
+    // Normal template application without automatic truncating
+    tweetTextarea.value = buildTweetText(selectedNote, activeTweetStyle);
+    updateCharCount();
+}
+
+// Auto-shortens the text currently inside the editor to fit the limit
+function autoShortenTweet() {
+    if (!selectedNote) return;
+    
+    const baseLen = getTweetBaseLength(selectedNote, activeTweetStyle);
+    const remainingChars = 280 - baseLen;
+    const maxTextLen = Math.max(0, remainingChars - 3);
+    
+    tweetTextarea.value = buildTweetText(selectedNote, activeTweetStyle, maxTextLen);
+    updateCharCount();
+    showToast('Tweet text auto-fitted!');
 }

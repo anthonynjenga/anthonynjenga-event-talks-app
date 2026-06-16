@@ -130,6 +130,16 @@
                     </div>
                     <p id="ref-text" class="ref-text">Selected release note snippet will be shown here...</p>
                 </div>
+
+                <!-- Tweet Style Selector -->
+                <div class="template-selector">
+                    <div class="composer-label">Tweet Style:</div>
+                    <div class="style-options" id="style-options">
+                        <button class="style-pill active" data-style="professional">Professional</button>
+                        <button class="style-pill" data-style="hype">Hype 🚨</button>
+                        <button class="style-pill" data-style="minimal">Minimal</button>
+                    </div>
+                </div>
                 
                 <!-- Tweet Customizer -->
                 <div class="tweet-composer-card">
@@ -137,6 +147,9 @@
                     <textarea id="tweet-textarea" placeholder="What's happening?"></textarea>
                     
                     <div class="composer-footer">
+                        <button id="auto-shorten-btn" class="auto-shorten-btn" title="Auto-shorten draft text to fit limits">
+                            <i class="fa-solid fa-scissors"></i> Auto-Fit
+                        </button>
                         <div class="char-counter" id="char-counter">
                             <span id="current-char-count">0</span> / <span class="max-chars">280</span>
                         </div>

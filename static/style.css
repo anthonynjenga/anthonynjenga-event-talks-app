@@ -899,3 +899,86 @@ a:hover {
         right: -100%;
     }
 }
+
+/* ==========================================================================
+   Template Selection in Drawer
+   ========================================================================== */
+.template-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.style-options {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.style-pill {
+    padding: 0.4rem 0.9rem;
+    border-radius: 50px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.style-pill:hover {
+    color: var(--text-primary);
+    border-color: var(--text-muted);
+}
+
+.style-pill.active {
+    background: var(--bg-secondary);
+    color: var(--accent-blue);
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 8px rgba(0, 242, 254, 0.1);
+    font-weight: 600;
+}
+
+body.light-theme .style-pill.active {
+    color: var(--accent-indigo);
+    border-color: var(--accent-indigo);
+    box-shadow: 0 0 8px rgba(79, 70, 229, 0.1);
+}
+
+/* Auto-shorten / Auto-fit button */
+.auto-shorten-btn {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #f87171;
+    padding: 0.3rem 0.75rem;
+    border-radius: 50px;
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: var(--transition-fast);
+    margin-right: auto; /* Push character counter to the right */
+}
+
+.auto-shorten-btn:hover {
+    background: rgba(239, 68, 68, 0.25);
+    border-color: #ef4444;
+    color: #fff;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.2);
+}
+
+body.light-theme .auto-shorten-btn {
+    background: rgba(220, 38, 38, 0.05);
+    border-color: rgba(220, 38, 38, 0.2);
+    color: #dc2626;
+}
+
+body.light-theme .auto-shorten-btn:hover {
+    background: rgba(220, 38, 38, 0.1);
+    border-color: #dc2626;
+    color: #dc2626;
+}
