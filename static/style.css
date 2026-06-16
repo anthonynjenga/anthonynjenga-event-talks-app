@@ -193,6 +193,16 @@ a:hover {
     gap: 1rem;
 }
 
+.header-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+#theme-toggle-btn {
+    padding: 0.75rem 1rem;
+}
+
 .bq-logo {
     position: relative;
     width: 50px;
@@ -574,6 +584,8 @@ a:hover {
     flex-grow: 1;
     color: var(--text-primary);
     font-size: 0.95rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .card-body p {
@@ -582,6 +594,44 @@ a:hover {
 
 .card-body p:last-child {
     margin-bottom: 0;
+}
+
+.card-body code {
+    background: var(--bg-tertiary);
+    padding: 0.15rem 0.35rem;
+    border-radius: var(--radius-sm);
+    font-family: monospace;
+    font-size: 0.85em;
+    word-break: break-all;
+    white-space: pre-wrap;
+    border: 1px solid var(--border-color);
+}
+
+.card-body pre {
+    background: var(--bg-tertiary);
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    overflow-x: auto;
+    max-width: 100%;
+    margin: 0.75rem 0;
+    border: 1px solid var(--border-color);
+}
+
+.card-body pre code {
+    background: transparent;
+    padding: 0;
+    border: none;
+    word-break: normal;
+    white-space: pre;
+}
+
+.card-body ul, .card-body ol {
+    padding-left: 1.25rem;
+    margin-bottom: 0.75rem;
+}
+
+.card-body li {
+    margin-bottom: 0.35rem;
 }
 
 /* Card Actions */
@@ -866,37 +916,203 @@ a:hover {
 /* ==========================================================================
    Responsive Adaptations
    ========================================================================== */
+/* ==========================================================================
+   Responsive Adaptations
+   ========================================================================== */
 @media (max-width: 768px) {
+    .app-container {
+        padding: 1.5rem 1rem;
+    }
+
     .app-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 1.5rem;
+        margin-bottom: 1.5rem;
     }
     
     .header-actions {
-        width: 100%;
+        width: auto;
+        gap: 0.5rem;
     }
     
     .header-actions .btn {
-        width: 100%;
+        width: auto;
+        padding: 0.75rem 1rem;
+    }
+    
+    .toolbar {
+        padding: 1.25rem;
+        gap: 1rem;
+    }
+    
+    .filter-wrapper {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .notes-grid {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+    
+    .note-card {
+        padding: 1.25rem;
+    }
+    
+    .tweet-drawer {
+        max-width: 100%;
+        right: -100%;
+    }
+}
+
+@media (max-width: 600px) {
+    .app-header {
+        padding-bottom: 1.25rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .logo-area {
+        gap: 0.75rem;
+    }
+    
+    .bq-logo {
+        width: 42px;
+        height: 42px;
+        border-width: 1.5px;
+    }
+    
+    .bq-logo i.fa-database {
+        font-size: 1.15rem;
+    }
+    
+    .bq-logo i.fa-magnifying-glass {
+        font-size: 0.6rem;
+        right: 9px;
+        bottom: 9px;
+    }
+    
+    .header-titles h1 {
+        font-size: 1.4rem;
+    }
+    
+    .header-titles .subtitle {
+        font-size: 0.8rem;
+    }
+    
+    /* Make buttons icon-only and compact on mobile */
+    .header-actions .btn {
+        padding: 0.75rem;
+        min-width: 42px;
+        height: 42px;
+        border-radius: var(--radius-md);
+    }
+    
+    .header-actions .btn span {
+        display: none;
     }
     
     .toolbar {
         padding: 1rem;
     }
     
-    .filter-wrapper {
-        flex-direction: column;
-        align-items: flex-start;
+    /* Horizontal scrollable filter pills for modern mobile experience */
+    .filter-pills {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        width: 100%;
+        padding-bottom: 0.5rem;
+        margin-right: -1rem; /* Allow pills to bleed to the edge of container padding */
+        padding-right: 1rem;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none; /* Firefox */
     }
     
-    .notes-grid {
-        grid-template-columns: 1fr;
+    .filter-pills::-webkit-scrollbar {
+        display: none; /* Chrome, Safari, Opera */
     }
     
-    .tweet-drawer {
-        max-width: 100%;
-        right: -100%;
+    .pill {
+        flex-shrink: 0;
+        padding: 0.45rem 0.95rem;
+        font-size: 0.8rem;
+    }
+    
+    /* Compact Tweet Drawer styling for mobile */
+    .drawer-header {
+        padding: 1.25rem 1rem;
+    }
+    
+    .drawer-header h3 {
+        font-size: 1.1rem;
+    }
+    
+    .drawer-content {
+        padding: 1.25rem 1rem;
+        gap: 1rem;
+    }
+    
+    .note-reference {
+        padding: 0.85rem;
+    }
+    
+    .ref-text {
+        max-height: 80px;
+        font-size: 0.8rem;
+    }
+    
+    .tweet-composer-card textarea {
+        height: 120px;
+        padding: 0.75rem;
+        font-size: 0.9rem;
+    }
+    
+    .composer-footer {
+        gap: 0.5rem;
+    }
+    
+    .drawer-actions {
+        gap: 0.5rem;
+    }
+    
+    .btn-full {
+        padding: 0.7rem 1.25rem;
+    }
+}
+
+@media (max-width: 400px) {
+    .header-titles .subtitle {
+        display: none; /* Hide subtitle to keep logo section ultra-compact on tiny viewports */
+    }
+    
+    .header-titles h1 {
+        font-size: 1.35rem;
+    }
+    
+    .bq-logo {
+        width: 38px;
+        height: 38px;
+    }
+    
+    .bq-logo i.fa-database {
+        font-size: 1.05rem;
+    }
+    
+    .bq-logo i.fa-magnifying-glass {
+        display: none; /* Hide secondary tiny magnifying glass on super small screens */
+    }
+    
+    .header-actions {
+        gap: 0.35rem;
+    }
+
+    .header-actions .btn {
+        min-width: 38px;
+        height: 38px;
+        padding: 0.6rem;
     }
 }
 
